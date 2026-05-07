@@ -27,10 +27,10 @@ int main()
         {
             if (item.nType == 0)  {
                 A* a = (A*)item.pObj;
-                a->f();
+                a->PutInfo();
             } else if (item.nType == 1) {
                 B* b = (B*)item.pObj;
-                b->f();
+                b->PutInfo();
             }
         }
     }

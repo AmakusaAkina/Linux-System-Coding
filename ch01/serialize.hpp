@@ -19,6 +19,7 @@ struct Serialized
 namespace type {
     const int A = 0;
     const int B = 1;
+    const int C = 2;
 }
 class Serializable
 {
@@ -71,6 +72,20 @@ public:
     int GetIndex() override;
     void PutInfo() override;
     float GetI();
+};
+
+class C : public Serializable
+{
+    string s;
+public:
+    C(){}
+    C(string string):s(string){}
+
+    bool Serialize(int fd) const override;
+    bool Deserialize(int fd) override;
+
+    int GetIndex() override;
+    void PutInfo() override;
 };
 
 class Serializer

@@ -7,7 +7,6 @@
 
 bool A::Serialize(int fd) const
 {
-    if (fd == -1) return false;
     int r = write(fd, &i, sizeof(int));
     if (r != sizeof(int)) return false;
     r = write(fd, &c, sizeof(char));
@@ -16,7 +15,6 @@ bool A::Serialize(int fd) const
 }
 bool A::Deserialize(int fd)
 {
-    if (fd == -1) return false;
     int r = read(fd, &i, sizeof(int));
     if (r != sizeof(int)) return false;
     r = read(fd, &c, sizeof(char));
@@ -136,9 +134,35 @@ float B::GetI()
     return i;
 }
 
+bool C::Serialize(int fd) const 
+{
+    int len = s.length();
+    if (write(fd, &len, sizeof(int)) != sizeof(int)) return false;
+    if (write(fd, s.c_str(), len) != len) return false;
+    return true;
+}
+bool C::Deserialize(int fd) 
+{
+    int len;
+    if (read(fd, &len, sizeof(int)) != sizeof(int)) return false;
+    if (len < 0) return false;
+    s.resize(len);
+    if (read(fd, &s[0], len) != len) return false;
+    return true;
+}
+int C::GetIndex()
+{
+    return type::C;
+}
+void C::PutInfo()
+{
+    fprintf(stdout, "%s\n", s.c_str());
+}
+
 const std::unordered_map<int, Serializable::Creator> Serializable::factory = {
-    {0, []() { return std::make_unique<A>(); }},
-    {1, []() { return std::make_unique<B>(); }},
+    {type::A, []() { return std::make_unique<A>(); }},
+    {type::B, []() { return std::make_unique<B>(); }},
+    {type::C, []() { return std::make_unique<C>(); }},
 };
 unique_ptr<Serializable> Serializable::Create(int i)
 {
@@ -246,15 +270,21 @@ bool Serializer::Serialize(const char* pFilePath, const vector<unique_ptr<Serial
     if (fd == -1)
     {
         perror("Serializer open error");
+        close(fd);
         return false;
     }
     for (auto &sample : v)
     {
         int type = sample->GetIndex();
         if (write(fd, &type, sizeof(int)) != sizeof(int))
+        {
+            close(fd);
             return false;
+        }
+            
         sample->Serialize(fd);
     }
+    close(fd);
     return true;
 }
 bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v)
@@ -288,7 +318,6 @@ bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializab
             close(fd);
             return false;
         }
-
         v.push_back(move(obj));
     }
     close(fd);
