@@ -31,6 +31,10 @@ bool A::Serialize(const char *pFilePath)
         perror("open error");
         return false;
     }
+
+    if (write(fd, &type::A, sizeof(int)) != sizeof(int)) 
+        return false;
+
     Serialize(fd);
     close(fd);
     return true;
@@ -43,11 +47,21 @@ bool A::Deserialize(const char *pFilePath)
         perror("open error");
         return false;
     }
+
+    int type;
+    if (read(fd, &type, sizeof(int)) != sizeof(int)) 
+        return false;
+    if (type != type::A) return false;
+
     Deserialize(fd);
     close(fd);
     return true;
 }
-void A::f()
+int A::GetIndex()
+{
+    return type::A;
+}
+void A::PutInfo()
 {
     PutI();
     PutC();
@@ -82,6 +96,10 @@ bool B::Serialize(const char *pFilePath)
         perror("open error");
         return false;
     }
+
+    if (write(fd, &type::B, sizeof(int)) != sizeof(int)) 
+        return false;
+
     Serialize(fd);
     close(fd);
     return true;
@@ -94,11 +112,21 @@ bool B::Deserialize(const char *pFilePath)
         perror("open error");
         return false;
     }
+
+    int type;
+    if (read(fd, &type, sizeof(int)) != sizeof(int)) 
+        return false;
+    if (type != type::B) return false;
+
     Deserialize(fd);
     close(fd);
     return true;
 }
-void B::f()
+int B::GetIndex()
+{
+    return type::B;
+}
+void B::PutInfo()
 {
     fprintf(stdout, "%f\n", i);
 }
@@ -108,6 +136,17 @@ float B::GetI()
     return i;
 }
 
+const std::unordered_map<int, Serializable::Creator> Serializable::factory = {
+    {0, []() { return std::make_unique<A>(); }},
+    {1, []() { return std::make_unique<B>(); }},
+};
+unique_ptr<Serializable> Serializable::Create(int i)
+{
+    auto it = factory.find(i);
+    if (it == factory.end())
+        return nullptr;
+    return it->second();
+}
 bool Serializer::Serialize(const char *pFilePath, const vector<A> &v)
 {
     int fd = open(pFilePath, O_WRONLY | O_CREAT | O_TRUNC, FILE_PERM_ALL);
@@ -147,7 +186,7 @@ bool Serializer::Deserialize(const char *pFilePath, vector<A> &v)
     close(fd);
     return true;
 }
-bool Serializer::Serialize(const char* pFilePath, vector<Serialized>& v)
+bool Serializer::Serialize(const char* pFilePath,const vector<Serialized>& v)
 {
     int fd = open(pFilePath, O_WRONLY | O_CREAT | O_TRUNC, FILE_PERM_ALL);
     if (fd == -1)
@@ -183,7 +222,8 @@ bool Serializer::Deserialize(const char* pFilePath, vector<Serialized>& v)
         Serialized item;
         int r = read(fd, &item.nType, sizeof(int));
 
-        if(r != sizeof(int)) break;
+        if (r == 0) break;
+        if(r != sizeof(int)) return false;
 
         if(item.nType == 0) {
             item.pObj = new A();
@@ -197,5 +237,60 @@ bool Serializer::Deserialize(const char* pFilePath, vector<Serialized>& v)
 
     close(fd);
 
+    return true;
+}
+
+bool Serializer::Serialize(const char* pFilePath, const vector<unique_ptr<Serializable>>& v)
+{
+    int fd = open(pFilePath, O_WRONLY | O_CREAT | O_TRUNC, FILE_PERM_ALL);
+    if (fd == -1)
+    {
+        perror("Serializer open error");
+        return false;
+    }
+    for (auto &sample : v)
+    {
+        int type = sample->GetIndex();
+        if (write(fd, &type, sizeof(int)) != sizeof(int))
+            return false;
+        sample->Serialize(fd);
+    }
+    return true;
+}
+bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v)
+{
+    int fd = open(pFilePath, O_RDONLY);
+    if (fd == -1)
+    {
+        perror("Deserialize open error");
+        return false;
+    }
+
+    while(true)
+    {
+        int type;
+        int r = read(fd, &type, sizeof(int));
+        if (r == 0) break;
+        if(r != sizeof(int)) 
+        {
+            close(fd);
+            return false;
+        }
+        auto obj = Serializable::Create(type);
+        if (!obj) 
+        {
+            fprintf(stderr, "Unknown type ID: %d\n", type);
+            close(fd);
+            return false;
+        }
+        if (!obj->Deserialize(fd))
+        {
+            close(fd);
+            return false;
+        }
+
+        v.push_back(move(obj));
+    }
+    close(fd);
     return true;
 }
