@@ -18,17 +18,20 @@ int main()
         v.push_back(make_unique<B>(b2));
         
         Serializer s;
-        s.Serialize("data", v);
+        s.SerializeRegister(a1.GetIndex(), "dataA");
+        s.SerializeRegister(b1.GetIndex(), "dataB");
+        s.SerializeRegister(c1.GetIndex(), "dataC");
+        s.Serialize(v);
     }
-    {
-        Serializer s;
-        vector<unique_ptr<Serializable>> v;
-        s.Deserialize("data", v);
+    // {
+    //     Serializer s;
+    //     vector<unique_ptr<Serializable>> v;
+    //     s.Deserialize("data", v);
 
-        for(auto &item : v)
-        {
-            item->PutInfo();
-        }
-    }
+    //     for(auto &item : v)
+    //     {
+    //         item->PutInfo();
+    //     }
+    // }
     return 0;
 }

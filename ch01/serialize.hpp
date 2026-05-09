@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 
 #pragma once
@@ -90,6 +91,8 @@ public:
 
 class Serializer
 {
+    unordered_map<int, const char*> serializeMap;
+    unordered_set<int> deserializeSet;
 public:
     bool Serialize(const char* pFilePath, const vector<A>& v);
     bool Deserialize(const char* pFilePath, vector<A>& v);
@@ -97,6 +100,15 @@ public:
     bool Serialize(const char* pFilePath, const vector<Serialized>& v);
     bool Deserialize(const char* pFilePath, vector<Serialized>& v);
 
+    //  序列化所有对象到指定文件
     bool Serialize(const char* pFilePath, const vector<unique_ptr<Serializable>>& v);
-    bool Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v);
+    bool Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v);   //  
+
+    //  根据注册表信息序列化对象到文件
+    bool Serialize(const vector<unique_ptr<Serializable>>& v);
+
+    bool SerializeRegister(Serializable* obj, const char* pFilePath);
+    bool DeserializeRegister(Serializable* obj);
+    bool SerializeRegister(int typeIndex, const char* pFilePath);
+    bool DeserializeRegister(int typeIndex);
 };

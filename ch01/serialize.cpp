@@ -323,3 +323,84 @@ bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializab
     close(fd);
     return true;
 }
+
+bool Serializer::Serialize(const vector<unique_ptr<Serializable>>& v)
+{
+    //  TODO: 遍历serializeMap构建<filename, fd> dict 构建<typeIndex, fd>dict
+    //  TODO: 遍历v, 依次写入文件
+    //  TODO: 遍历dict, 关闭所有打开的文件
+    unordered_map<int, int>dict;
+    bool openfile = true;
+    for(auto &entry : serializeMap)
+    {
+        auto it = dict.find(entry.first);
+        if (it == dict.end())
+        {
+            int fd = open(entry.second, O_WRONLY | O_CREAT | O_TRUNC, FILE_PERM_ALL);
+            if (fd == -1)
+            {
+                perror("Serializer open error");
+                openfile = false;
+                break;
+            }
+            dict.insert({entry.first, fd});
+        }
+    }
+
+    bool success = true;
+    for (auto &sample : v)
+    {
+        int type = sample->GetIndex();
+        auto it = dict.find(type);
+        if (it == dict.end())
+        {
+            fprintf(stderr, "Skip: Unregistered Type\n");
+            continue;
+        }
+        int fd = it->second;
+        if (write(fd, &type, sizeof(int)) != sizeof(int))
+        {
+            fprintf(stderr, "Write Type Error\n");
+            success = false;
+            break;
+        }
+            
+        if (!sample->Serialize(fd))
+        {
+            fprintf(stderr, "Write Error\n");
+            success = false;
+            break;
+        }
+    }
+
+    bool closefile = true;
+    for(auto & entry : dict)
+    {
+        if (-1 == close(entry.second))
+        {
+            closefile = false;
+            fprintf(stderr, "Close File Failed\n");
+        }
+    }
+        
+    return openfile && success && closefile;
+}
+
+bool Serializer::SerializeRegister(Serializable* obj, const char* pFilePath)
+{
+    return SerializeRegister(obj->GetIndex(), pFilePath);
+}
+bool Serializer::DeserializeRegister(Serializable* obj)
+{
+    return DeserializeRegister(obj->GetIndex());
+}
+bool Serializer::SerializeRegister(int typeIndex, const char* pFilePath)
+{
+    serializeMap.emplace(typeIndex, pFilePath);
+    return true;
+}
+bool Serializer::DeserializeRegister(int typeIndex)
+{
+    deserializeSet.insert(typeIndex);
+    return true;
+}
