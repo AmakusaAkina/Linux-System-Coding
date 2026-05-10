@@ -170,7 +170,6 @@ bool Serializer::Serialize(const vector<unique_ptr<Serializable>>& v)
 }
 bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v, Filter option)
 {
-    // TODO:
     int fd = open(pFilePath, O_RDONLY);
     if (fd == -1) {
         perror("Deserialize open error");
@@ -239,8 +238,8 @@ bool Serializer::CreateTypeFdDict(unordered_map<int, int>& dict)
 {
     unordered_map<string, int>pathFdDict;
     bool openfile = true;
-        for(auto &entry : serializeMap) {
-            string filepath = entry.second;
+        for(auto& [type, path] : serializeMap) {
+            string filepath = path;
             auto it = pathFdDict.find(filepath);
             if (it == pathFdDict.end()) {
                 int fd = open(filepath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, FILE_PERM_ALL);
@@ -249,10 +248,10 @@ bool Serializer::CreateTypeFdDict(unordered_map<int, int>& dict)
                     openfile = false;
                     break;
                 }
-                dict.insert({entry.first, fd});
+                dict.insert({type, fd});
                 pathFdDict[filepath] = fd;
             } else {
-                dict[entry.first] = it->second;
+                dict[type] = it->second;
             }
         }
     return openfile;

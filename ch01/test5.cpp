@@ -45,7 +45,7 @@ int main()
             item->PutInfo();
         }
 
-        s3.RegisterDeserialize(c.GetIndex());
+        s3.RegisterDeserialize(a.GetIndex());
         s3.Deserialize("dataC", v3, Serializer::Filter::Blacklist);
         fprintf(stdout, "S3Test:\n");
         for(auto &item : v3)
