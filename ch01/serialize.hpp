@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -5,7 +7,7 @@
 #include <unordered_set>
 #include <functional>
 
-#pragma once
+#define FILE_PERM_ALL (S_IRWXU | S_IRWXG | S_IRWXO)
 
 using namespace std;
 
