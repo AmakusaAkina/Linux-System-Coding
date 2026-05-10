@@ -24,14 +24,41 @@ int main()
         s.Serialize(v);
     }
     {
-        Serializer s;
-        vector<unique_ptr<Serializable>> v;
-        s.Deserialize("dataA", v, Serializer::Filter::Normal);
-
-        for(auto &item : v)
+        Serializer s1, s2, s3;
+        vector<unique_ptr<Serializable>> v1, v2, v3;
+        A a;
+        B b;
+        C c;
+        s1.RegisterDeserialize(static_cast<int>(Serializable::Type::A));
+        s1.Deserialize("dataAB", v1, Serializer::Filter::Normal);
+        fprintf(stdout, "S1Test:\n");
+        for(auto &item : v1)
         {
             item->PutInfo();
         }
+
+        s2.RegisterDeserialize(a.GetIndex());
+        s2.Deserialize("dataAB", v2, Serializer::Filter::Whitelist);
+        fprintf(stdout, "S2Test:\n");
+        for(auto &item : v2)
+        {
+            item->PutInfo();
+        }
+
+        s3.RegisterDeserialize(c.GetIndex());
+        s3.Deserialize("dataC", v3, Serializer::Filter::Blacklist);
+        fprintf(stdout, "S3Test:\n");
+        for(auto &item : v3)
+        {
+            item->PutInfo();
+        }
+    }
+    {
+
+        
+        
+
+
     }
     return 0;
 }

@@ -171,6 +171,36 @@ bool Serializer::Serialize(const vector<unique_ptr<Serializable>>& v)
 bool Serializer::Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v, Filter option)
 {
     // TODO:
+    int fd = open(pFilePath, O_RDONLY);
+    if (fd == -1) {
+        perror("Deserialize open error");
+        return false;
+    }
+
+    while(true) {
+        int type;
+        int r = read(fd, &type, sizeof(int));
+        if (r == 0) break;
+        if(r != sizeof(int)) {
+            close(fd);
+            return false;
+        }
+        auto obj = Serializable::Create(type);
+        if (!obj) {
+            fprintf(stderr, "Unknown type ID: %d\n", type);
+            close(fd);
+            return false;
+        }   
+            if (!obj->Deserialize(fd)) {
+                close(fd);
+                return false;
+            }
+            bool isRegistered = deserializeSet.find(type) != deserializeSet.end();
+            if (ShouldAppend(option, isRegistered)) {
+                v.push_back(move(obj));
+            }
+    }
+    close(fd);
     return true;
 }
 bool Serializer::RegisterSerialize(Serializable* obj, const char* pFilePath)
