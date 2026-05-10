@@ -19,15 +19,8 @@ struct Serialized
     Serialized(int n, void* p):nType(n), pObj(p){}
 };
 
-namespace type {
-    const int A = 0;
-    const int B = 1;
-    const int C = 2;
-}
 class Serializable
 {
-    using Creator = function<std::unique_ptr<Serializable>()>;
-    static const unordered_map<int, Creator> factory;
 public:
     virtual ~Serializable() = default;
 
@@ -36,7 +29,17 @@ public:
     virtual int GetIndex() = 0;
     virtual void PutInfo() = 0;
 
+    static bool TypeValid(int i);
     static unique_ptr<Serializable> Create(int i);
+
+    enum class Type : int {
+        A = 0,
+        B = 1,
+        C = 2
+    };
+private:
+    using Creator = function<std::unique_ptr<Serializable>()>;
+    static const unordered_map<int, Creator> factory;
 };
 
 class A : public Serializable
@@ -93,8 +96,6 @@ public:
 
 class Serializer
 {
-    unordered_map<int, const char*> serializeMap;
-    unordered_set<int> deserializeSet;
 public:
     bool Serialize(const char* pFilePath, const vector<A>& v);
     bool Deserialize(const char* pFilePath, vector<A>& v);
@@ -106,11 +107,36 @@ public:
     bool Serialize(const char* pFilePath, const vector<unique_ptr<Serializable>>& v);
     bool Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v);   //  
 
+    enum class Filter{
+        Blacklist = -1,
+        Normal = 0,
+        Whitelist = 1
+    };
     //  根据注册表信息序列化对象到文件
     bool Serialize(const vector<unique_ptr<Serializable>>& v);
+    //  过滤型反序列化
+    bool Deserialize(const char* pFilePath, vector<unique_ptr<Serializable>>& v, Filter option);
 
-    bool SerializeRegister(Serializable* obj, const char* pFilePath);
-    bool DeserializeRegister(Serializable* obj);
-    bool SerializeRegister(int typeIndex, const char* pFilePath);
-    bool DeserializeRegister(int typeIndex);
+    bool RegisterSerialize(Serializable* obj, const char* pFilePath);
+    bool RegisterDeserialize(Serializable* obj);
+    bool RegisterSerialize(int typeIndex, const char* pFilePath);
+    bool RegisterDeserialize(int typeIndex);
+    void ClearRegSerialize();
+    void ClearRegDeserialize();
+private:
+    unordered_map<int, const char*> serializeMap;
+    unordered_set<int> deserializeSet;
+    bool CreateTypeFdDict(unordered_map<int, int>& dict);
+    bool CloseFilesByDict(unordered_map<int, int>& dict);
+    bool SerializeByDict(const vector<unique_ptr<Serializable>>& v,const unordered_map<int, int>& dict);
+    inline bool ShouldAppend(Filter option, bool isRegistered) const;
 };
+
+inline bool Serializer::ShouldAppend(Filter option, bool isRegistered) const {
+    switch (option) {
+        case Filter::Normal:    return true;
+        case Filter::Blacklist: return !isRegistered;
+        case Filter::Whitelist: return isRegistered;
+        default : return false;
+    }
+}

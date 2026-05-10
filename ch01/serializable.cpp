@@ -3,8 +3,6 @@
 #include <unistd.h>
 #include <cstdio>
 
-using namespace std;
-
 bool A::Serialize(int fd) const
 {
     int r = write(fd, &i, sizeof(int));
@@ -24,14 +22,17 @@ bool A::Deserialize(int fd)
 bool A::Serialize(const char *pFilePath)
 {
     int fd = open(pFilePath, O_WRONLY | O_CREAT | O_APPEND, FILE_PERM_ALL);
-    if (fd == -1)
-    {
+    if (fd == -1) {
         perror("open error");
         return false;
     }
 
-    if (write(fd, &type::A, sizeof(int)) != sizeof(int)) 
+    int typeValue = static_cast<int>(Type::A);
+    if (write(fd, &typeValue, sizeof(int)) != sizeof(int)) {
+        close(fd);
         return false;
+    }
+
 
     Serialize(fd);
     close(fd);
@@ -40,8 +41,7 @@ bool A::Serialize(const char *pFilePath)
 bool A::Deserialize(const char *pFilePath)
 {
     int fd = open(pFilePath, O_RDONLY);
-    if (fd == -1)
-    {
+    if (fd == -1) {
         perror("open error");
         return false;
     }
@@ -49,7 +49,7 @@ bool A::Deserialize(const char *pFilePath)
     int type;
     if (read(fd, &type, sizeof(int)) != sizeof(int)) 
         return false;
-    if (type != type::A) return false;
+    if (type != static_cast<int>(Type::A)) return false;
 
     Deserialize(fd);
     close(fd);
@@ -57,7 +57,7 @@ bool A::Deserialize(const char *pFilePath)
 }
 int A::GetIndex()
 {
-    return type::A;
+    return static_cast<int>(Type::A);
 }
 void A::PutInfo()
 {
@@ -89,14 +89,16 @@ bool B::Deserialize(int fd)
 bool B::Serialize(const char *pFilePath)
 {
     int fd = open(pFilePath, O_WRONLY | O_CREAT | O_APPEND, FILE_PERM_ALL);
-    if (fd == -1)
-    {
+    if (fd == -1) {
         perror("open error");
         return false;
     }
 
-    if (write(fd, &type::B, sizeof(int)) != sizeof(int)) 
+    int typeValue = static_cast<int>(Type::B);
+    if (write(fd, &typeValue, sizeof(int)) != sizeof(int)) {
+        close(fd);
         return false;
+    }
 
     Serialize(fd);
     close(fd);
@@ -105,8 +107,7 @@ bool B::Serialize(const char *pFilePath)
 bool B::Deserialize(const char *pFilePath)
 {
     int fd = open(pFilePath, O_RDONLY);
-    if (fd == -1)
-    {
+    if (fd == -1) {
         perror("open error");
         return false;
     }
@@ -114,7 +115,7 @@ bool B::Deserialize(const char *pFilePath)
     int type;
     if (read(fd, &type, sizeof(int)) != sizeof(int)) 
         return false;
-    if (type != type::B) return false;
+    if (type != static_cast<int>(Type::B)) return false;
 
     Deserialize(fd);
     close(fd);
@@ -122,7 +123,7 @@ bool B::Deserialize(const char *pFilePath)
 }
 int B::GetIndex()
 {
-    return type::B;
+    return static_cast<int>(Type::B);
 }
 void B::PutInfo()
 {
@@ -152,7 +153,7 @@ bool C::Deserialize(int fd)
 }
 int C::GetIndex()
 {
-    return type::C;
+    return static_cast<int>(Type::C);
 }
 void C::PutInfo()
 {
