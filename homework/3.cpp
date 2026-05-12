@@ -37,20 +37,20 @@ string FormatStat(const struct stat& s, const char* filename)
     ss << ((s.st_mode & S_IXOTH) ? "x" : "-");
 
     // 硬链接数
-    ss << " " << setw(1) << s.st_nlink;
+    ss << " " << setw(2) << s.st_nlink;
 
     // 用户名
     passwd* pw = getpwuid(s.st_uid);
     if (pw)
-        ss << " " << setw(4) << pw->pw_name;
+        ss << " " << setw(6) << pw->pw_name;
 
     // 组名
     group* gr = getgrgid(s.st_gid);
     if (gr)
-        ss << " " << setw(4) << gr->gr_name;
+        ss << " " << setw(6) << gr->gr_name;
 
     // 文件大小
-    ss << " " << setw(6) << s.st_size;
+    ss << " " << setw(8) << s.st_size;
 
     // 修改时间
     char timebuf[64];
@@ -87,9 +87,9 @@ int main(int argc, char** argv)
     closedir(dir);
 
     //  TODO:遍历filenames查询文件信息并格式化
-    struct stat st;
-    vector<string> output;
-    int blocks = 0;
+    struct stat st;         //  stat buffer
+    vector<string> output;  //  output buffer
+    int blocks = 0;         //  blocks count
     for(auto& entry : filenames){
         if (-1 == stat(entry.c_str(), &st)) {
             cerr << "Cannot read entry" << endl;
