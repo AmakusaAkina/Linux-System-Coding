@@ -11,7 +11,7 @@ int main()
     {
         A a;
         a.Deserialize("data");
-        a.f();
+        a.PutInfo();
     }
     return 0;
 }

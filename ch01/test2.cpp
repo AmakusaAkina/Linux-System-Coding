@@ -22,7 +22,7 @@ int main()
         
         for (auto &item : v)
         {
-            item.f();
+            item.PutInfo();
         }
     }
     return 0;
