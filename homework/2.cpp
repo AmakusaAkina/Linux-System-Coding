@@ -4,18 +4,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string>
-#include <sys/stat.h>
 
 using namespace std;
-
-// 判断路径是否是目录
-bool isDirectory(const string &path) {
-    struct stat st;
-    if (stat(path.c_str(), &st) != 0) {
-        return false;
-    }
-    return S_ISDIR(st.st_mode);
-}
 
 // 递归遍历目录，打印层次结构
 void list(const string &path, const string &ignoreFolder, int level = 0) {
@@ -36,12 +26,14 @@ void list(const string &path, const string &ignoreFolder, int level = 0) {
         // 缩进层次
         string indent(level * 2, ' ');
 
-        if (!isDirectory(fullPath)) {
+        // 判断路径是否是目录
+        if (entry->d_type != DT_DIR) {
             // 非文件夹打印文件名
             cout << indent << filename << endl;
             continue;
         }
 
+        // 判断路径是否是要求不展开的文件夹
         if (filename == ignoreFolder) {
             // 精准匹配忽略的文件夹，只打印文件名
             cout << indent << filename << endl;
@@ -53,9 +45,7 @@ void list(const string &path, const string &ignoreFolder, int level = 0) {
 
         // 递归调用，层级 +1
         list(fullPath, ignoreFolder, level + 1);
-
     }
-
     closedir(dir);
 }
 
