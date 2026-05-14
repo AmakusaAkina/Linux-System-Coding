@@ -17,12 +17,9 @@ PluginManager::PluginManager()
     );
     registry["help"] = func_help;
 }
-PluginManager::PluginManager(string dirpath):PluginManager()
+PluginManager::PluginManager(const string& dirpath):PluginManager()
 {
-    if (!GetPluginPaths(dirpath)) {
-        cerr << "Cannot Get Plugin Names" << endl;
-    }
-    LoadPlugins();
+    LoadPlugins(dirpath);
 }
 PluginManager::~PluginManager()
 {
@@ -32,13 +29,14 @@ PluginManager::~PluginManager()
         }
     }
 }
-
-bool PluginManager::GetPluginPaths(string plugin_dir)
+vector<string> PluginManager::GetPluginPaths(const string& plugin_dir)
 {
+    vector<string> paths;
     DIR* dir = opendir(plugin_dir.c_str());
     if (!dir) {
         cerr << "Cannot open directory: " << plugin_dir << endl;
-        return false;
+        paths.clear();
+        return paths;
     }
 
     struct dirent* entry;
@@ -53,12 +51,14 @@ bool PluginManager::GetPluginPaths(string plugin_dir)
         }
     }
     closedir(dir);
-    return true;
+    return paths;
 }
 
-void PluginManager::LoadPlugins()
+void PluginManager::LoadPlugins(const string& dir)
 {
-    for (auto path : paths) {
+    std::vector<std::string> paths;
+    paths = GetPluginPaths(dir);
+    for (const auto& path : paths) {
         void* handle = dlopen(path.c_str(), RTLD_LAZY);
         if (!handle) {
             cerr << "dlopen error: " << dlerror() << endl;
@@ -81,12 +81,12 @@ void PluginManager::LoadPlugins()
 
 void PluginManager::List()
 {
-    for (auto& p : plugins) {
+    for (const auto& p : plugins) {
         cout << p.id << ": " << p.desc << endl;
     }
 }
 
-void PluginManager::Run(string cmd)
+void PluginManager::Run(const string& cmd)
 {
     auto it = registry.find(cmd);
     if (it == registry.end()) {

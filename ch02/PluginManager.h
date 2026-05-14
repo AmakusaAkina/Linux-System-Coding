@@ -6,14 +6,14 @@ class PluginManager
 {
 public:
     PluginManager();
-    PluginManager(std::string dirpath);
+    PluginManager(const std::string& dirpath);
     virtual ~PluginManager();
-    bool GetPluginPaths(std::string plugin_dir);
-    void LoadPlugins();
+    void LoadPlugins(const std::string& dir);
     void List();
-    void Run(std::string cmd);
+    void Run(const std::string& cmd);
 private:
-    std::vector<std::string> paths;
     std::vector<PluginInfo> plugins;
     std::unordered_map<std::string, std::function<void()>> registry;
+
+    std::vector<std::string> GetPluginPaths(const std::string& plugin_dir);
 };
