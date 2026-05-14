@@ -1,14 +1,12 @@
 #pragma once
 #include <functional>
 #include <string>
-extern "C"
-{
-    using FUNC_GET_ID = const char* (*)();
 
-    using FUNC_GET_DESC = const char* (*)();
+using FUNC_GET_ID = const char* (*)();
 
-    using FUNC_EXECUTE = void (*)();
-}
+using FUNC_GET_DESC = const char* (*)();
+
+using FUNC_EXECUTE = void (*)();
 
 struct PluginInfo {
     std::string id;
