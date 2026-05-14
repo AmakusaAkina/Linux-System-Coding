@@ -1,46 +1,24 @@
-#include "CPluginEnumerator.h"
-#include <dlfcn.h>
+#include "PluginManager.h"
+#include "IPlugin.h"
 #include <iostream>
 #include <dirent.h>
 #include <fcntl.h>
-#include <unistd.h>
+
 
 using namespace std;
 
-typedef void (*FUNC_PRINT)();
+int main(int argc, char** argv) {
 
-int main() {
-    CPluginEnumerator enumerator;
-    vector<string> pluginnames;
-    if (!enumerator.GetPluginNames(pluginnames)) {
-        cerr << "Cannot Get Plugin Names" << endl;
+    if (argc < 2) {
+        cout << "./a.out help 以显示所有" << endl;
+        return -1;
     }
-    
-    for (auto name : pluginnames) {
-                // 检查文件可读
-        int fd = open(name.c_str(), O_RDONLY);
-        if (fd == -1) {
-            cerr << "Cannot open file: " << name << endl;
-            continue;
-        }
-        close(fd);
 
-        void* handle = dlopen(name.c_str(), RTLD_LAZY);
-        if (!handle) {
-            cerr << "dlopen error: " << dlerror() << endl;
-            continue;
-        }
+    PluginManager pluginManager("../plugin");
 
-        FUNC_PRINT dl_print = (FUNC_PRINT)dlsym(handle, "Print");
-        if (!dl_print) {
-            cerr << "dlsym error: " << dlerror() << endl;
-            dlclose(handle);
-            continue;
-        }
+    string cmd = argv[1];
 
-        dl_print();
-        dlclose(handle);
-    }
+    pluginManager.Run(cmd);
 
     return 0;
 }
