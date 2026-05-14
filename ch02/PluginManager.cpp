@@ -90,7 +90,7 @@ void PluginManager::Run(string cmd)
 {
     auto it = registry.find(cmd);
     if (it == registry.end()) {
-        cerr << "Unknown cmd" << endl;
+        cerr << "Unknown cmd" << endl << "help 查看有效cmd" << endl;
         return;
     }
 
