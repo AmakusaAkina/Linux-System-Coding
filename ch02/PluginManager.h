@@ -9,11 +9,30 @@ public:
     PluginManager(const std::string& dirpath);
     virtual ~PluginManager();
     void LoadPlugins(const std::string& dir);
-    void List();
-    void Run(const std::string& cmd);
+    void List() const;
+    void Run(const std::string& cmd) const;
 private:
+    class PluginHelp : public IPlugin
+    {
+        PluginManager* manager;
+    public:
+        PluginHelp(PluginManager* manager):manager(manager){}
+        const char* GetID() const override
+        {
+            return "help";
+        }
+        const char* Description() const override
+        {
+            return "显示所有插件";
+        }
+        void Execute() const override
+        {
+            manager->List();
+        }
+    };
+    // std::vector<PluginInfo> plugins;
     std::vector<PluginInfo> plugins;
-    std::unordered_map<std::string, std::function<void()>> registry;
+    std::unordered_map<std::string, IPlugin*> registry;
 
     std::vector<std::string> GetPluginPaths(const std::string& plugin_dir);
 };

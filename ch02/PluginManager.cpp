@@ -8,14 +8,9 @@ using namespace std;
 
 PluginManager::PluginManager()
 {
-    auto func_help = [this](){this->List();};
-    plugins.emplace_back(
-        "help",
-        "显示所有插件",
-        nullptr,
-        func_help
-    );
-    registry["help"] = func_help;
+    IPlugin* help = new PluginHelp(this);
+    plugins.emplace_back(nullptr, help);
+    registry[help->GetID()] = help;
 }
 PluginManager::PluginManager(const string& dirpath):PluginManager()
 {
@@ -26,7 +21,9 @@ PluginManager::~PluginManager()
     for (auto& p : plugins) {
         if(p.handle) {
             dlclose(p.handle);
+            continue;
         }
+        delete(p.plugin);   //  处理builtin help
     }
 }
 vector<string> PluginManager::GetPluginPaths(const string& plugin_dir)
@@ -65,28 +62,33 @@ void PluginManager::LoadPlugins(const string& dir)
             continue;
         }
 
-        FUNC_GET_ID get_id = (FUNC_GET_ID)dlsym(handle, "GetPluginID");
-        FUNC_GET_DESC get_desc = (FUNC_GET_DESC)dlsym(handle, "GetPluginDescription");
-        FUNC_EXECUTE execute = (FUNC_EXECUTE)dlsym(handle, "Execute");
-
-        if (!get_id || !get_desc || !execute) {
+        FUNC_CREATE_OBJ create_obj = (FUNC_CREATE_OBJ)dlsym(handle, "CreateObj");
+        if (!create_obj) {
             dlclose(handle);
             continue;
         }
 
-        plugins.emplace_back(get_id(), get_desc(), handle, execute);
-        registry[get_id()] = execute;
+        IPlugin* plugin = nullptr;
+        create_obj(&plugin);
+        if (!plugin) {
+            cerr << "CreateObj Failed" << endl;
+            dlclose(handle);
+            continue;
+        }
+
+        plugins.emplace_back(handle, plugin);
+        registry[plugin->GetID()] = plugin;
     }
 }
 
-void PluginManager::List()
+void PluginManager::List() const
 {
     for (const auto& p : plugins) {
-        cout << p.id << ": " << p.desc << endl;
+        cout << p.plugin->GetID() << ": " << p.plugin->Description() << endl;
     }
 }
 
-void PluginManager::Run(const string& cmd)
+void PluginManager::Run(const string& cmd) const
 {
     auto it = registry.find(cmd);
     if (it == registry.end()) {
@@ -94,5 +96,5 @@ void PluginManager::Run(const string& cmd)
         return;
     }
 
-    it->second();
+    it->second->Execute();
 }
