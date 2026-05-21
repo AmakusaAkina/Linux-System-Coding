@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
     }
 
     PluginManager pluginManager("../plugin");
+    pluginManager.LoadPlugins("./plugin");
 
     string cmd = argv[1];
 
