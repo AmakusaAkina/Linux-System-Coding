@@ -30,7 +30,6 @@ private:
             manager->List();
         }
     };
-    // std::vector<PluginInfo> plugins;
     std::vector<PluginInfo> plugins;
     std::unordered_map<std::string, IPlugin*> registry;
 

@@ -2,12 +2,6 @@
 #include <functional>
 #include <string>
 
-using FUNC_GET_ID = const char* (*)();
-
-using FUNC_GET_DESC = const char* (*)();
-
-using FUNC_EXECUTE = void (*)();
-
 class IPlugin
 {
 public:
@@ -23,4 +17,3 @@ struct PluginInfo {
     IPlugin* plugin;
     PluginInfo(void* handle, IPlugin* plugin):handle(handle), plugin(plugin){}
 };
-
